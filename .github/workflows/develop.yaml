@@ -1,0 +1,41 @@
+name: Dev Workflow For Tests
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3 # v2 is deprecated, use v3
+        with:
+          version: 9 # Use a valid version
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run tests
+        env:
+          jwt.access.secret: 'test-secret'
+          jwt.refresh.secret: 'test-refresh-secret'
+          # Add other required mocks or secrets here
+        run: pnpm run test
+
+      - name: Test status
+        run: echo "Tests passed"

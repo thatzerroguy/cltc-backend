@@ -1,7 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { DrizzleDatabase } from '../database/database.provider';
+import { userSchema } from '../database/schema/user.schema';
+import { eq } from 'drizzle-orm';
 
 interface JwtPayload {
   sub: string;
@@ -10,7 +18,10 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    @Inject('DRIZZLE') private readonly db: DrizzleDatabase,
+  ) {
     const accessTokenSecret = config.get<string>('jwt.access.secret');
     if (!accessTokenSecret) {
       new Logger(JwtStrategy.name).error('JWT access secret is not defined');
@@ -23,7 +34,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload): { user_id: string; username: string } {
-    return { user_id: payload.sub, username: payload.username };
+  async validate(payload: JwtPayload) {
+    const [user] = await this.db
+      .select()
+      .from(userSchema)
+      .where(eq(userSchema.id, payload.sub))
+      .limit(1);
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...result } = user;
+
+    return result;
   }
 }

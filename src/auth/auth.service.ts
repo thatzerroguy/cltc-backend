@@ -6,13 +6,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { DrizzleDatabase } from 'src/database/database.types';
-import { userSchema } from 'src/database/schema';
-import { Profile, SuperAdmin } from 'src/interface/user.inteface';
+import { DrizzleDatabase } from '../database/database.types';
+import { userSchema } from '../database/schema';
+import { Profile, SuperAdmin } from '../interface/user.inteface';
 import * as bcrypt from 'bcrypt';
-import { AuthPayLoad, RefreshTokenPayload } from 'src/types/auth-payload';
+import { AuthPayLoad, RefreshTokenPayload } from '../types/auth-payload';
 import { ConfigService } from '@nestjs/config';
-import { profileSchema } from 'src/database/schema/profile.schema';
+import { profileSchema } from '../database/schema/profile.schema';
 
 @Injectable()
 export class AuthService {
@@ -119,15 +119,12 @@ export class AuthService {
 
   /**
    * @author thatzerroguy
-   * @description Logs in super admin
-   * @param username The username of the super admin
-   * @param password The password of the super admin
-   * @returns Promise<SuperAdmin> The super admin object with access tokens.
+   * @description Logs in admin
+   * @param username The username of the admin
+   * @param password The password of the admin
+   * @returns Promise<Admin> The admin object with access tokens.
    */
-  public async loginSuperAdmin(
-    username: string,
-    password: string,
-  ): Promise<SuperAdmin> {
+  public async login(username: string, password: string): Promise<SuperAdmin> {
     try {
       // Check if the username already exists
       const existingUser = await this.drizzle.query.userSchema.findFirst({
@@ -135,9 +132,9 @@ export class AuthService {
       });
 
       if (!existingUser) {
-        this.logger.error(`Super admin ${username} not found`);
+        this.logger.error(`Admin ${username} not found`);
         throw new HttpException(
-          `Super admin ${username} not found`,
+          `Admin ${username} not found`,
           HttpStatus.NOT_FOUND,
         );
       }
@@ -149,9 +146,9 @@ export class AuthService {
       );
 
       if (!isPasswordValid) {
-        this.logger.error(`Super admin ${username} password is incorrect`);
+        this.logger.error(` Admin ${username} password is incorrect`);
         throw new HttpException(
-          `Super admin ${username} password is incorrect`,
+          `Admin ${username} password is incorrect`,
           HttpStatus.UNAUTHORIZED,
         );
       }
@@ -164,7 +161,7 @@ export class AuthService {
       const refreshToken = this.generateRefreshToken(refreshPayload);
 
       // Log the login of the super admin
-      this.logger.log(`Super admin ${username} logged in`);
+      this.logger.log(` Admin ${username} logged in`);
 
       return {
         id: existingUser.id,
