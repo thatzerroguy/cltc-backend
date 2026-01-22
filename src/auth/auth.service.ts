@@ -6,13 +6,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { DrizzleDatabase } from 'src/database/database.types';
-import { userSchema } from 'src/database/schema';
-import { Profile, SuperAdmin } from 'src/interface/user.inteface';
+import { DrizzleDatabase } from '../database/database.types';
+import { userSchema } from '../database/schema';
+import { Profile, SuperAdmin } from '../interface/user.inteface';
 import * as bcrypt from 'bcrypt';
-import { AuthPayLoad, RefreshTokenPayload } from 'src/types/auth-payload';
+import { AuthPayLoad, RefreshTokenPayload } from '../types/auth-payload';
 import { ConfigService } from '@nestjs/config';
-import { profileSchema } from 'src/database/schema/profile.schema';
+import { profileSchema } from '../database/schema/profile.schema';
 
 @Injectable()
 export class AuthService {
