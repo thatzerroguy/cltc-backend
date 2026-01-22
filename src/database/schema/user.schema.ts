@@ -6,12 +6,15 @@ export const roleEnum = pgEnum('role', ['super_admin', 'admin']);
 
 export const departmentEnum = pgEnum('department', ['ict', 'dg', 'hr']);
 
+export const subRoleEnum = pgEnum('sub_role', ['head', 'manager', 'employee']);
+
 export const userSchema = pgTable('users', {
   id: uuid('id')
     .default(sql`gen_random_uuid()`)
     .primaryKey(),
   role: roleEnum('role').default('admin').notNull(),
   department: departmentEnum('department').default('ict').notNull(),
+  sub_role: subRoleEnum('sub_role').default('employee').notNull(),
   username: text('username').notNull().unique(),
   password: text('password').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
