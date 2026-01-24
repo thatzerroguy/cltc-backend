@@ -57,7 +57,7 @@ describe('AuthService', () => {
           'jwt.refresh.secret': 'test_refresh_secret',
           'jwt.refresh.expiresIn': '7d',
         };
-        return config[key];
+        return config[key as keyof typeof config];
       }),
     };
 
@@ -66,15 +66,15 @@ describe('AuthService', () => {
         AuthService,
         {
           provide: 'DRIZZLE',
-          useValue: drizzleMock,
+          useValue: drizzleMock as unknown,
         },
         {
           provide: JwtService,
-          useValue: jwtServiceMock,
+          useValue: jwtServiceMock as JwtService,
         },
         {
           provide: ConfigService,
-          useValue: configServiceMock,
+          useValue: configServiceMock as ConfigService,
         },
       ],
     }).compile();

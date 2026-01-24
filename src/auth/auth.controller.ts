@@ -6,6 +6,12 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../guard/roles.guard';
 import { Roles } from '../decorator/roles.decorator';
 
+interface RequestWithUser {
+  user: {
+    id: string;
+  };
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -26,7 +32,10 @@ export class AuthController {
   @Post('admin')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('super_admin')
-  createAdmin(@Req() req: any, @Body() createUserDto: CreateUserDto) {
+  createAdmin(
+    @Req() req: RequestWithUser,
+    @Body() createUserDto: CreateUserDto,
+  ) {
     return this.authService.createAdmin(
       req.user.id,
       createUserDto.username,
