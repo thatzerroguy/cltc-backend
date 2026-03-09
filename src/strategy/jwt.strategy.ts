@@ -42,12 +42,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       .limit(1);
 
     if (!user) {
+      console.log('JwtStrategy: User not found for payload', payload);
       throw new UnauthorizedException();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = user;
-
-    return result;
+    
+    return { ...result, role: result.role.toUpperCase() };
   }
 }

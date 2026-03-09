@@ -3,9 +3,7 @@ import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { userSchema } from './user.schema';
 
 export const profileSchema = pgTable('profile', {
-  id: uuid('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: uuid('id').primaryKey().defaultRandom(),
   user_id: uuid('user_id').references(() => userSchema.id),
   email: text('email').notNull(),
   name: text('name').notNull(),

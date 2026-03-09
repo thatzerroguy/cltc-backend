@@ -4,6 +4,10 @@ export interface SuperAdmin {
   role: string;
   access_token: string;
   refresh_token: string;
+  name?: string;
+  email?: string;
+  department?: string;
+  position?: string;
 }
 
 export interface Admin {

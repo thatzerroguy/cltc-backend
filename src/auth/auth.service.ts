@@ -13,6 +13,8 @@ import * as bcrypt from 'bcrypt';
 import { AuthPayLoad, RefreshTokenPayload } from '../types/auth-payload';
 import { ConfigService } from '@nestjs/config';
 import { profileSchema } from '../database/schema/profile.schema';
+import { departmentSchema } from '../database/schema/departments.schema';
+import { UserRole } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -44,6 +46,23 @@ export class AuthService {
         throw new HttpException('Username already exists', HttpStatus.CONFLICT);
       }
 
+      // Resolve Department ID for Super Admin (Management)
+      let departmentId: string;
+      const deptName = 'Management';
+      const existingDept = await this.drizzle.query.departmentSchema.findFirst({
+          where: (depts, { eq }) => eq(depts.name, deptName),
+      });
+
+      if (existingDept) {
+          departmentId = existingDept.id;
+      } else {
+          const [newDept] = await this.drizzle
+              .insert(departmentSchema)
+              .values({ name: deptName })
+              .returning();
+          departmentId = newDept.id;
+      }
+
       // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -53,7 +72,9 @@ export class AuthService {
         .values({
           username,
           password: hashedPassword,
-          role: 'super_admin',
+          role: UserRole.SUPER_ADMIN,
+          department: deptName,
+          department_id: departmentId,
         })
         .returning({
           id: userSchema.id,
@@ -62,6 +83,15 @@ export class AuthService {
         });
 
       const superAdmin = result[0];
+
+      // Create profile for Super Admin
+      await this.drizzle.insert(profileSchema).values({
+          user_id: superAdmin.id,
+          name: 'Super Admin',
+          email: 'superadmin@example.com',
+          department: deptName,
+          position: 'Super Admin',
+      });
 
       // Generate a JWT token for the super admin
       const payload = {
@@ -163,12 +193,21 @@ export class AuthService {
       // Log the login of the super admin
       this.logger.log(` Admin ${username} logged in`);
 
+      // Fetch profile
+      const profile = await this.drizzle.query.profileSchema.findFirst({
+        where: (profiles, { eq }) => eq(profiles.user_id, existingUser.id),
+      });
+
       return {
         id: existingUser.id,
         role: existingUser.role,
         username: existingUser.username,
         access_token: accessToken,
         refresh_token: refreshToken,
+        name: profile?.name || existingUser.username,
+        email: profile?.email || '',
+        department: profile?.department || existingUser.department || '',
+        position: profile?.position || '',
       };
     } catch (error) {
       if (error instanceof HttpException) {
@@ -203,8 +242,28 @@ export class AuthService {
           role: true,
         },
       });
-      if (!user || user.role !== 'super_admin') {
+      if (
+        !user ||
+        (user.role as string).toUpperCase() !== UserRole.SUPER_ADMIN
+      ) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+
+      // Resolve Department
+      let departmentId: string;
+      const deptName = 'IT';
+      const existingDept = await this.drizzle.query.departmentSchema.findFirst({
+        where: (depts, { eq }) => eq(depts.name, deptName),
+      });
+
+      if (existingDept) {
+          departmentId = existingDept.id;
+      } else {
+          const [newDept] = await this.drizzle
+              .insert(departmentSchema)
+              .values({ name: deptName })
+              .returning();
+          departmentId = newDept.id;
       }
 
       // Create admin
@@ -213,7 +272,9 @@ export class AuthService {
         .values({
           username,
           password,
-          role: 'admin',
+          role: 'ADMIN',
+          department: deptName,
+          department_id: departmentId,
         })
         .returning({
           id: userSchema.id,
@@ -229,7 +290,7 @@ export class AuthService {
           user_id: admin.id,
           name: 'Admin',
           email: 'admin@example.com',
-          department: 'IT',
+          department: deptName,
           position: 'Admin',
         })
         .returning({

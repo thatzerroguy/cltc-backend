@@ -31,7 +31,7 @@ export class AuthController {
 
   @Post('admin')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('super_admin')
+  @Roles('super_admin', 'SUPER_ADMIN')
   createAdmin(
     @Req() req: RequestWithUser,
     @Body() createUserDto: CreateUserDto,
